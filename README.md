@@ -284,7 +284,7 @@ $ docker tag nginx:latest $EXTERNAL_IP/docker/nginx
 
 $ docker push $EXTERNAL_IP/docker/nginx
 Using default tag: latest
-The push refers to repository [34.75.235.1/docker/nginx]
+The push refers to repository [$EXTERNAL_IP/docker/nginx]
 9d907f11dc74: Pushed 
 79974a1a12aa: Pushed 
 f12d4345b7f3: Pushed 
@@ -316,7 +316,19 @@ pod "nginx" deleted
 $ oc run nginx --image $INTERNAL_IP/docker/nginx
 pod/nginx created
 
+$ oc get pods
+NAME    READY   STATUS    RESTARTS   AGE
+nginx   1/1     Running   0          6s
+
 $ oc get pods nginx -o json | jq .spec.containers[0].image
 "$INTERNAL_IP/docker/nginx"
 
+$ oc port-forward pod/nginx 8080:80 &
+
+$ curl 127.0.0.1:8080
+...
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+...
 ```
