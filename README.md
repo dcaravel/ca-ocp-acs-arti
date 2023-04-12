@@ -30,6 +30,7 @@ Script | Comment
 `09-add-CA-ACS.sh`          | Adds CA Root Cert to RH ACS (Central, Scanner)
 
 ## Example
+Example runs of the scripts mentioned
 
 `./01-create-CA-cert.sh`
 ```sh
@@ -203,8 +204,10 @@ myCA.pem                       100%  956     1.4MB/s   00:00
 
 `./07-open-JCR.sh`
 ```sh
-==== Opening 34.75.235.1 - default creds admin/password ====
+==== Opening external_ip - default creds admin/password ====
 ```
+With UI open, setup wizard will appear, must accept EULA, change admin password, and recommended to create default `docker` repositories (rest of settings can be skipped)
+
 
 `./08-add-pull-secret-OCP.sh`
 ```sh
@@ -213,11 +216,18 @@ myCA.pem                       100%  956     1.4MB/s   00:00
 Username: read
 Password: 
 
-==== Creating secret jcr-pull-secret in current context ====
+==== Prompting for registry creds ====
 
-secret/jcr-pull-secret created
 
-==== Adding secret jcr-pull-secret to default SA in current context ====
+==== Creating secret jcr-ext-pull-secret in current context ====
+
+secret/jcr-ext-pull-secret created
+
+==== Creating secret jcr-int-pull-secret in current context ====
+
+secret/jcr-int-pull-secret created
+
+==== Adding secret jcr-ext-pull-secret and jcr-int-pull-secret to default SA in current context ====
 
 serviceaccount/default patched
 ```
@@ -243,4 +253,70 @@ pod "central-55ddc5d68d-9r7th" deleted
 ==== Restarting Scanner ====
 
 pod "scanner-77469bc4d5-w2cj4" deleted
+```
+
+## Usage / Outcome
+
+Pushing an image to JCR via docker (colima) using external svc IP
+
+```sh
+$ EXTERNAL_IP=$(kubectl get svc jfrog-container-registry-artifactory-nginx -o json -n artifactory-jcr | jq -r '.status.loadBalancer.ingress[0] | .ip')
+
+$ docker login $EXTERNAL_IP
+Username: admin
+Password: 
+Login Succeeded
+
+$ docker pull --platform=linux/amd64 nginx
+Using default tag: latest
+latest: Pulling from library/nginx
+26c5c85e47da: Pull complete 
+4f3256bdf66b: Pull complete 
+2019c71d5655: Pull complete 
+8c767bdbc9ae: Pull complete 
+78e14bb05fd3: Pull complete 
+75576236abf5: Pull complete 
+Digest: sha256:63b44e8ddb83d5dd8020327c1f40436e37a6fffd3ef2498a6204df23be6e7e94
+Status: Downloaded newer image for nginx:latest
+docker.io/library/nginx:latest
+
+$ docker tag nginx:latest $EXTERNAL_IP/docker/nginx
+
+$ docker push $EXTERNAL_IP/docker/nginx
+Using default tag: latest
+The push refers to repository [34.75.235.1/docker/nginx]
+9d907f11dc74: Pushed 
+79974a1a12aa: Pushed 
+f12d4345b7f3: Pushed 
+935b5bd454e1: Pushed 
+fb6d57d46ad5: Pushed 
+ed7b0ef3bf5b: Pushed 
+latest: digest: sha256:f2fee5c7194cbbfb9d2711fa5de094c797a42a51aa42b0c8ee8ca31547c872b1 size: 1570
+```
+
+Creating a pod with image from JCR
+
+```sh
+$ EXTERNAL_IP=$(kubectl get svc jfrog-container-registry-artifactory-nginx -o json -n artifactory-jcr | jq -r '.status.loadBalancer.ingress[0] | .ip')
+$ INTERNAL_IP=$(kubectl get svc jfrog-container-registry-artifactory-nginx -o json -n artifactory-jcr | jq '.spec.clusterIP' -r)
+
+$ oc run nginx --image $EXTERNAL_IP/docker/nginx
+pod/nginx created
+
+$ oc get pods
+NAME    READY   STATUS    RESTARTS   AGE
+nginx   1/1     Running   0          12s
+
+$ oc get pods nginx -o json | jq .spec.containers[0].image
+"$EXTERNAL_IP/docker/nginx"
+
+$ oc delete pod nginx
+pod "nginx" deleted
+
+$ oc run nginx --image $INTERNAL_IP/docker/nginx
+pod/nginx created
+
+$ oc get pods nginx -o json | jq .spec.containers[0].image
+"$INTERNAL_IP/docker/nginx"
+
 ```
