@@ -1,0 +1,12 @@
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1  = artifactory.artifactory-jcr
+DNS.2  = artifactory.artifactory-jcr.svc
+DNS.3  = arti.local
+DNS.4  = *.arti.local
+IP.1   = {{JCR_CLUSTER_IP}}
+IP.2   = {{JCR_EXTERNAL_IP}}
