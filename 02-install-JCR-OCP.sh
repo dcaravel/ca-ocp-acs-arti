@@ -19,11 +19,12 @@ helm repo add jfrog https://charts.jfrog.io
 print_title "Updating helm jfrog repo"
 helm repo update jfrog
 
-print_title "Installing JFrog Container Registry (Artifactory) w/ persistence disabled"
+print_title "Installing JFrog Container Registry (Artifactory)"
 helm upgrade -i jfrog-container-registry jfrog/artifactory-jcr \
   -n $NAMESPACE \
+  --set artifactory.ingress.enabled=false \
   --set artifactory.postgresql.enabled=false \
-  --set artifactory.artifactory.persistence.enabled=false
+  --set artifactory.artifactory.persistence.enabled=true
 
 print_title "Waiting for Load Balancer External IP to be provisioned"
 JCR_IP=""

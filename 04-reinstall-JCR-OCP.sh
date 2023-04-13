@@ -16,9 +16,10 @@ print_title "Creating $secret_name secret w/ JCR certs"
 kubectl delete secret $secret_name -n $NAMESPACE 2>/dev/null || true
 kubectl create secret tls $secret_name --cert=$ARTI_CERT --key=$ARTI_KEY -n $NAMESPACE
 
-print_title "Installing JFrog Container Registry (Artifactory) w/ persistence ENABLED"
+print_title "Upgrading JFrog Container Registry (Artifactory)"
 helm upgrade -i jfrog-container-registry jfrog/artifactory-jcr \
   -n $NAMESPACE \
   --set artifactory.ingress.enabled=false \
   --set artifactory.postgresql.enabled=false \
+  --set artifactory.artifactory.persistence.enabled=true \
   --set artifactory.nginx.tlsSecretName="$secret_name"
