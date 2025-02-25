@@ -17,9 +17,6 @@ kubectl delete secret $secret_name -n $NAMESPACE 2>/dev/null || true
 kubectl create secret tls $secret_name --cert=$ARTI_CERT --key=$ARTI_KEY -n $NAMESPACE
 
 print_title "Upgrading JFrog Container Registry (Artifactory) with TLS cert"
-helm upgrade -i jfrog-container-registry jfrog/artifactory-jcr \
+helm upgrade -i jfrog-container-registry jfrog/artifactory-jcr --version $VERSION \
   -n $NAMESPACE \
-  --set artifactory.ingress.enabled=false \
-  --set artifactory.postgresql.enabled=false \
-  --set artifactory.artifactory.persistence.enabled=true \
   --set artifactory.nginx.tlsSecretName="$secret_name"

@@ -11,7 +11,9 @@ oc create namespace $NAMESPACE || true
 
 print_title "Adding anyuid SCC to default SA"
 # JCR will fail to installed without appropriate runtime permissions
-oc adm policy add-scc-to-user anyuid -z default -n $NAMESPACE
+# oc adm policy add-scc-to-user anyuid -z default -n $NAMESPACE
+# grant privileged because ^^ doesn't work anymore with newer versions of artifactory
+oc adm policy add-scc-to-user privileged -z default -n $NAMESPACE
 
 print_title "Adding helm jfrog repo"
 helm repo add jfrog https://charts.jfrog.io
@@ -20,11 +22,8 @@ print_title "Updating helm jfrog repo"
 helm repo update jfrog
 
 print_title "Installing JFrog Container Registry (Artifactory)"
-helm upgrade -i jfrog-container-registry jfrog/artifactory-jcr \
-  -n $NAMESPACE \
-  --set artifactory.ingress.enabled=false \
-  --set artifactory.postgresql.enabled=false \
-  --set artifactory.artifactory.persistence.enabled=true
+helm upgrade -i jfrog-container-registry jfrog/artifactory-jcr --version $VERSION \
+  -n $NAMESPACE
 
 print_title "Waiting for Load Balancer External IP to be provisioned"
 JCR_IP=""

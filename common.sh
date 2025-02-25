@@ -13,6 +13,7 @@ ARTI_CSR=$CERTS_DIR/arti.local.csr
 ARTI_CERT=$CERTS_DIR/arti.local.crt
 
 NAMESPACE=artifactory-jcr
+VERSION=107.104.9
 
 function get_jcr_external_ip() {
     kubectl get svc jfrog-container-registry-artifactory-nginx -o json -n $NAMESPACE | jq -r '.status.loadBalancer.ingress[0] | .ip'
